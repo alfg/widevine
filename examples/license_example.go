@@ -6,6 +6,8 @@ import (
 	"github.com/alfg/widevine"
 )
 
+// AES key and IV for the provider "widevine_test".
+// Use these test keys for testing or integration tests.
 var (
 	key = []byte{
 		0x1a, 0xe8, 0xcc, 0xd0, 0xe7, 0x98, 0x5c, 0xc0,
@@ -20,9 +22,28 @@ var (
 
 func main() {
 
-	wv := widevine.New(key, iv)
+	// Set Widevine options and create instance.
+	options := widevine.Options{
+		Key:      key,
+		IV:       iv,
+		Provider: "widevine_test",
+	}
+	wv := widevine.New(options)
 
-	contentID := "test"
+	// Your video content ID, usually a GUID.
+	contentID := "testing"
+
+	// Make the request to generate or get a content key.
 	resp := wv.GetContentKey(contentID)
-	fmt.Println(resp.Status)
+
+	// Response data from Widevine Cloud.
+	fmt.Println("status: ", resp.Status)
+	fmt.Println("drm: ", resp.DRM)
+	for _, v := range resp.Tracks {
+		fmt.Println("key_id: ", v.KeyID)
+		fmt.Println("type: ", v.Type)
+		fmt.Println("drm_type: ", v.PSSH[0].DRMType)
+		fmt.Println("data: ", v.PSSH[0].Data)
+	}
+	fmt.Println("already_used: ", resp.AlreadyUsed)
 }

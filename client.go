@@ -3,7 +3,6 @@ package widevine
 import (
 	"bytes"
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -11,11 +10,12 @@ import (
 	"time"
 )
 
+// HTTPClient defines an HTTP client.
 type HTTPClient struct {
 	*http.Client
 }
 
-func (c *HTTPClient) get(url string, i interface{}, format string) error {
+func (c *HTTPClient) get(url string, i interface{}) error {
 
 	fmt.Println("querying..." + url)
 	rsp, e := c.Get(url)
@@ -33,15 +33,10 @@ func (c *HTTPClient) get(url string, i interface{}, format string) error {
 		return fmt.Errorf("expected status 2xx, got %s: %s", rsp.Status, string(b))
 	}
 
-	if format == "json" {
-		return json.Unmarshal(b, &i)
-	} else if format == "xml" {
-		return xml.Unmarshal(b, &i)
-	}
-	return fmt.Errorf("expected format, got %s", format)
+	return json.Unmarshal(b, &i)
 }
 
-func (c *HTTPClient) post(url string, i interface{}, body interface{}, format string) error {
+func (c *HTTPClient) post(url string, i interface{}, body interface{}) error {
 
 	fmt.Println("querying..." + url)
 	payload, _ := json.Marshal(body)
@@ -63,17 +58,10 @@ func (c *HTTPClient) post(url string, i interface{}, body interface{}, format st
 	if e != nil {
 		return e
 	}
-	// fmt.Println(string(b))
 	if rsp.Status[0] != '2' {
 		return fmt.Errorf("expected status 2xx, got %s: %s", rsp.Status, string(b))
 	}
-
-	if format == "json" {
-		return json.Unmarshal(b, &i)
-	} else if format == "xml" {
-		return xml.Unmarshal(b, &i)
-	}
-	return fmt.Errorf("expected format, got %s", format)
+	return json.Unmarshal(b, &i)
 }
 
 // NewClient creates an HTTPClient instance.

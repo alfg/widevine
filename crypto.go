@@ -11,7 +11,20 @@ import (
 	"fmt"
 )
 
-func generateSignature(payload []byte) string {
+type Crypto struct {
+	Key []byte
+	IV  []byte
+}
+
+func NewCrypto(key []byte, iv []byte) *Crypto {
+	c := &Crypto{
+		Key: key,
+		IV:  iv,
+	}
+	return c
+}
+
+func (c *Crypto) generateSignature(payload []byte) string {
 	h := sha1.New()
 	h.Write([]byte(payload))
 
@@ -19,32 +32,29 @@ func generateSignature(payload []byte) string {
 	hash := fmt.Sprintf("%x", bs)
 
 	// Create signature.
-	ciphertext := encrypt(hash)
+	ciphertext := c.encrypt(hash)
 	return ciphertext
 }
 
-func encrypt(text string) string {
+func (c *Crypto) encrypt(text string) string {
 	// See: https://golang.org/pkg/crypto/cipher/#NewCBCEncrypter
 
-	// key, _ := hex.DecodeString(KEY)
-	// iv, _ := hex.DecodeString(IV)
+	textDec, _ := hex.DecodeString(text)
 
-	textb, _ := hex.DecodeString(text)
-
-	plaintext := pad([]byte(textb))
+	plaintext := pad([]byte(textDec))
 
 	if len(plaintext)%aes.BlockSize != 0 {
 		panic("plaintext is not a multiple of the block size")
 	}
 
-	block, err := aes.NewCipher(key)
+	block, err := aes.NewCipher(c.Key)
 	if err != nil {
 		panic(err)
 	}
 
 	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
 
-	mode := cipher.NewCBCEncrypter(block, iv)
+	mode := cipher.NewCBCEncrypter(block, c.IV)
 	mode.CryptBlocks(ciphertext[aes.BlockSize:], plaintext)
 
 	enc := base64.StdEncoding.EncodeToString([]byte(ciphertext[aes.BlockSize:]))

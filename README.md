@@ -1,8 +1,10 @@
 # Widevine
-Golang Client API for Widevine.
+Golang Client API and License Proxy for Widevine.
 
 ## Resources
 * https://www.widevine.com/product_news.html
+* https://storage.googleapis.com/wvdocs/Widevine_DRM_Getting_Started.pdf
+* https://storage.googleapis.com/wvdocs/Widevine_DRM_Architecture_Overview.pdf
 * https://storage.googleapis.com/wvdocs/Widevine_DRM_Encryption_API.pdf
 * https://storage.googleapis.com/wvdocs/Widevine_DRM_Proxy_Integration.pdf
 * https://developers.google.com/protocol-buffers/
