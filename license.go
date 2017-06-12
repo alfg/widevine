@@ -3,7 +3,6 @@ package widevine
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 
 	"github.com/alfg/widevine/pssh"
 	"github.com/golang/protobuf/proto"
@@ -48,6 +47,53 @@ type GetContentKeyResponse struct {
 	AlreadyUsed bool `json:"already_used"`
 }
 
+type LicenseResponse struct {
+	Status          string `json:"status"`
+	License         string `json:"license"`
+	LicenseMetadata []struct {
+		ContentID   string `json:"content_id"`
+		LicenseType string `json:"license_type"`
+		RequestType string `json:"request_type"`
+	}
+	SupportedTracks []struct {
+		Type  string `json:"type"`
+		KeyID string `json:"key_id"`
+	}
+	Make           string `json:"make"`
+	Model          string `json:"model"`
+	SecurityLevel  int    `json:"security_level"`
+	InternalStatus int    `json:"internal_status"`
+	SessionState   struct {
+		LicenseID struct {
+			RequestID  string `json:"request_id"`
+			SessionID  string `json:"session_id"`
+			PurchaseID string `json:"purchase_id"`
+			Type       string `json:"type"`
+			Version    int    `json:"version"`
+		}
+		SigningKey     string `json:"signing_key"`
+		KeyboxSystemID int    `json:"keybox_system_id"`
+		LicenseCounter int    `json:"license_counter"`
+	}
+	DRMCertSerialNumber  string `json:"drm_cert_serial_number"`
+	DeviceWhitelistState string `json:"device_whitelist_state"`
+	MessageType          string `json:"message_type"`
+	Platform             string `json:"platform"`
+	DeviceState          string `json:"device_state"`
+	PSSHData             struct {
+		KeyID     string `json:"key_id"`
+		ContentID string `json:"content_id"`
+	}
+	ClientMaxHDCPVersion string `json:"client_max_hdcp_version"`
+	ClientInfo           []struct {
+		Name  string `json:"name"`
+		Value string `json:"value"`
+	}
+	PlatformVerificationStatus string `json:"platform_verification_status"`
+	ContentOwner               string `json:"content_owner"`
+	ContentPRovider            string `json:"content_provider"`
+}
+
 // New returns a Widevine instance.
 func New(opts Options) *Widevine {
 
@@ -64,8 +110,15 @@ func (wp *Widevine) GetContentKey(contentID string) GetContentKeyResponse {
 	msg := wp.buildMessage(contentID)
 	resp := wp.sendRequest(msg)
 
-	enc := wp.buildPSSH(contentID)
-	fmt.Println("pssh  build:", enc)
+	// enc := wp.buildPSSH(contentID)
+	// fmt.Println("pssh  build:", enc)
+	return resp
+}
+
+// LicenseRequest creates a license request used with a proxy server.
+func (wp *Widevine) LicenseRequest(contentID string, body string) LicenseResponse {
+	msg := wp.buildLicenseMessage(contentID, body)
+	resp := wp.sendLicenseRequest(msg)
 	return resp
 }
 
@@ -106,6 +159,28 @@ func (wp *Widevine) buildMessage(contentID string) map[string]interface{} {
 	return postBody
 }
 
+func (wp *Widevine) buildLicenseMessage(contentID string, body string) map[string]interface{} {
+	enc := base64.StdEncoding.EncodeToString([]byte(contentID))
+
+	message := map[string]interface{}{
+		"payload":             body,
+		"content_id":          enc,
+		"provider":            wp.Provider,
+		"allowed_track_types": "SD_HD",
+	}
+	jsonMessage, _ := json.Marshal(message)
+	b64message := base64.StdEncoding.EncodeToString(jsonMessage)
+
+	// Create signature and postBody.
+	crypto := NewCrypto(wp.Key, wp.IV)
+	postBody := map[string]interface{}{
+		"request":   b64message,
+		"signature": crypto.generateSignature(jsonMessage),
+		"signer":    wp.Provider,
+	}
+	return postBody
+}
+
 func (wp *Widevine) sendRequest(body map[string]interface{}) GetContentKeyResponse {
 	// Make client call.
 	resp := make(map[string]string)
@@ -117,4 +192,12 @@ func (wp *Widevine) sendRequest(body map[string]interface{}) GetContentKeyRespon
 	output := GetContentKeyResponse{}
 	json.Unmarshal(dec, &output)
 	return output
+}
+
+func (wp *Widevine) sendLicenseRequest(body map[string]interface{}) LicenseResponse {
+	// Make client call.
+	resp := LicenseResponse{}
+	client, _ := NewClient()
+	client.post(getLicenseURL, &resp, body)
+	return resp
 }
