@@ -1,6 +1,9 @@
 # Widevine
 Golang Client API and License Proxy for Widevine.
 
+## Protobuf
+`protoc.exe --go_out=. *.proto`
+
 ## Resources
 * https://www.widevine.com/product_news.html
 * https://storage.googleapis.com/wvdocs/Widevine_DRM_Getting_Started.pdf

@@ -3,6 +3,10 @@ package widevine
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
+
+	"github.com/alfg/widevine/pssh"
+	"github.com/golang/protobuf/proto"
 )
 
 const (
@@ -59,10 +63,20 @@ func New(opts Options) *Widevine {
 func (wp *Widevine) GetContentKey(contentID string) GetContentKeyResponse {
 	msg := wp.buildMessage(contentID)
 	resp := wp.sendRequest(msg)
+
+	enc := wp.buildPSSH(contentID)
+	fmt.Println("pssh  build:", enc)
 	return resp
 }
 
-func buildRequest() {
+func (wp *Widevine) buildPSSH(contentID string) string {
+	wvpssh := &pssh.WidevineCencHeader{
+		Provider:  proto.String(wp.Provider),
+		ContentId: []byte(contentID),
+	}
+	p, _ := proto.Marshal(wvpssh)
+
+	return base64.StdEncoding.EncodeToString(p)
 }
 
 func (wp *Widevine) buildMessage(contentID string) map[string]interface{} {
