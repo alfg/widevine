@@ -54,6 +54,9 @@ TODO
 
 ## TODO
 * Custom PSSH API
+* Tests
+* More error handling
+* Implement more Widevine features
 
 ## Resources
 * https://www.widevine.com/product_news.html
