@@ -1,0 +1,20 @@
+version: "{build}"
+
+platform: x64
+
+branches:
+  only:
+    - master
+
+environment:
+  GOPATH: c:\gopath
+
+install:
+  - echo %PATH%
+  - echo %GOPATH%
+  - set PATH=%GOPATH%\bin;C:\go\bin;%PATH%
+  - go version
+  - go env 
+
+build_script:
+  - go test -v
