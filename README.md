@@ -1,6 +1,9 @@
 # Widevine
 Golang Client API for Widevine Cloud.
 
+[![Build Status](https://travis-ci.org/alfg/widevine.svg?branch=master)](https://travis-ci.org/alfg/widevine) [![Build status](https://ci.appveyor.com/api/projects/status/n06qc97gthx38dtt?svg=true)](https://ci.appveyor.com/project/alfg/widevine)
+
+
 ## Install
 ```
 go get github.com/alfg/widevine

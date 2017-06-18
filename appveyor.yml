@@ -15,6 +15,7 @@ install:
   - set PATH=%GOPATH%\bin;C:\go\bin;%PATH%
   - go version
   - go env 
+  - go get -u github.com/golang/protobuf
 
 build_script:
   - go test -v
