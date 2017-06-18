@@ -63,12 +63,18 @@ func (c *Crypto) encrypt(text string) string {
 	return enc
 }
 
+// Pads src to a multiple of aes.Blocksize (16) using PKCS #7 standard block padding.
+// See http://tools.ietf.org/html/rfc5652#section-6.3.
 func pad(src []byte) []byte {
 	padding := aes.BlockSize - len(src)%aes.BlockSize
 	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
 	return append(src, padtext...)
 }
 
+// Removes PKCS #7 standard block padding from src.
+// See http://tools.ietf.org/html/rfc5652#section-6.3.
+// This function is the inverse of pad.
+// If the padding is not well-formed, unpad returns nil.
 func unpad(src []byte) ([]byte, error) {
 	length := len(src)
 	unpadding := int(src[length-1])

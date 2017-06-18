@@ -23,7 +23,8 @@ var (
 		0x9a, 0x9d, 0x46, 0x7f, 0x59, 0x83, 0x92, 0x49}
 )
 
-// Test contentID.
+// Test contentID
+// Test MPD: https://demo.unified-streaming.com/video/tears-of-steel/tears-of-steel-dash-widevine.ism/.mpd
 const contentID = "fkj3ljaSdfalkr3j"
 
 func main() {
@@ -54,7 +55,6 @@ func proxy(w http.ResponseWriter, r *http.Request) {
 	// Log any additional details from response.
 	fmt.Println(data.LicenseMetadata)
 	fmt.Println(data.SupportedTracks)
-	fmt.Println(data)
 
 	// CORS required for Javascript players.
 	w.Header().Set("Access-Control-Allow-Origin", "*")
