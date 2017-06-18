@@ -1,5 +1,5 @@
 # Widevine
-Golang Widevine Cloud Client API and License Proxy for Widevine.
+Golang Client API for Widevine Cloud.
 
 ## Install
 ```
