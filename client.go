@@ -16,8 +16,6 @@ type HTTPClient struct {
 }
 
 func (c *HTTPClient) get(url string, i interface{}) error {
-
-	fmt.Println("querying..." + url)
 	rsp, e := c.Get(url)
 	if e != nil {
 		return e
@@ -37,8 +35,6 @@ func (c *HTTPClient) get(url string, i interface{}) error {
 }
 
 func (c *HTTPClient) post(url string, i interface{}, body interface{}) error {
-
-	fmt.Println("querying..." + url)
 	payload, _ := json.Marshal(body)
 	req, e := http.NewRequest("POST", url, bytes.NewBuffer(payload))
 	if e != nil {

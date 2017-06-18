@@ -30,7 +30,16 @@ type Options struct {
 	URL      string
 }
 
-// GetContentKeyResponse JSON response from Widevine Cloud /cenc/getcontentkey/<provider>.
+// Policy struct to set policy options for a ContentKey request.
+type Policy struct {
+	ContentID string
+	Tracks    []string
+	DRMTypes  []string
+	Policy    string
+}
+
+// GetContentKeyResponse JSON response from Widevine Cloud.
+// /cenc/getcontentkey/<provider>
 type GetContentKeyResponse struct {
 	Status      string   `json:"status"`
 	DRM         []drm    `json:"drm"`
@@ -54,7 +63,8 @@ type pssh struct {
 	Data    string `json:"data"`
 }
 
-// GetLicenseResponse decoded JSON response from Widevine Cloud /cenc/getlicense.
+// GetLicenseResponse decoded JSON response from Widevine Cloud.
+// /cenc/getlicense
 type GetLicenseResponse struct {
 	Status                     string            `json:"status"`
 	License                    string            `json:"license"`
@@ -122,8 +132,9 @@ func New(opts Options) *Widevine {
 }
 
 // GetContentKey creates a content key giving a contentID.
-func (wp *Widevine) GetContentKey(contentID string) GetContentKeyResponse {
-	msg := wp.buildMessage(contentID)
+func (wp *Widevine) GetContentKey(contentID string, policy Policy) GetContentKeyResponse {
+	p := wp.setPolicy(contentID, policy)
+	msg := wp.buildCKMessage(p)
 	resp := wp.getContentKeyRequest(msg)
 
 	// TODO
@@ -149,21 +160,9 @@ func (wp *Widevine) buildPSSH(contentID string) string {
 	return base64.StdEncoding.EncodeToString(p)
 }
 
-func (wp *Widevine) buildMessage(contentID string) map[string]interface{} {
-	enc := base64.StdEncoding.EncodeToString([]byte(contentID))
-	payload := map[string]interface{}{
-		"content_id": enc,
-		"tracks": []interface{}{
-			map[string]string{"type": "SD"},
-			map[string]string{"type": "HD"},
-			map[string]string{"type": "AUDIO"},
-		},
-		"drm_types": []string{"WIDEVINE"},
-		"policy":    "default",
-	}
-
+func (wp *Widevine) buildCKMessage(policy map[string]interface{}) map[string]interface{} {
 	// Marshal and encode payload.
-	jsonPayload, _ := json.Marshal(payload)
+	jsonPayload, _ := json.Marshal(policy)
 	b64payload := base64.StdEncoding.EncodeToString([]byte(jsonPayload))
 
 	// Create signature and postBody.
@@ -174,6 +173,26 @@ func (wp *Widevine) buildMessage(contentID string) map[string]interface{} {
 		"signer":    wp.Provider,
 	}
 	return postBody
+}
+
+func (wp *Widevine) setPolicy(contentID string, policy Policy) map[string]interface{} {
+	enc := base64.StdEncoding.EncodeToString([]byte(contentID))
+
+	// Build tracks []interface.
+	var tracks []interface{}
+	for _, track := range policy.Tracks {
+		tracks = append(tracks, map[string]string{"type": track})
+	}
+
+	// Build policy interface.
+	// TODO: Set defaults.
+	p := map[string]interface{}{
+		"content_id": enc,
+		"tracks":     tracks,
+		"drm_types":  policy.DRMTypes,
+		"policy":     policy.Policy,
+	}
+	return p
 }
 
 func (wp *Widevine) buildLicenseMessage(contentID string, body string) map[string]interface{} {

@@ -28,8 +28,16 @@ wv := widevine.New(options)
 // Your video content ID, usually a GUID.
 contentID := "testing"
 
+// Set policy options.
+policy := widevine.Policy{
+    ContentID: contentID,
+    Tracks:    []string{"SD", "HD", "AUDIO"},
+    DRMTypes:  []string{"WIDEVINE"},
+    Policy:    "default",
+}
+
 // Make the request to generate or get a content key.
-resp := wv.GetContentKey(contentID)
+resp := wv.GetContentKey(contentID, policy)
 
 // Response data from Widevine Cloud.
 fmt.Println("status: ", resp.Status)

@@ -13,7 +13,15 @@ func TestGetContentKey(t *testing.T) {
 	wv := New(options)
 
 	contentID := "testing"
-	resp := wv.GetContentKey(contentID)
+
+	// Make the request to generate or get a content key.
+	policy := Policy{
+		ContentID: contentID,
+		Tracks:    []string{"SD", "HD", "AUDIO"},
+		DRMTypes:  []string{"WIDEVINE"},
+		Policy:    "default",
+	}
+	resp := wv.GetContentKey(contentID, policy)
 
 	if resp.Status != "OK" {
 		t.Error()
