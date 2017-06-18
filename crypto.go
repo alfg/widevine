@@ -11,11 +11,13 @@ import (
 	"fmt"
 )
 
+// Crypto struct.
 type Crypto struct {
 	Key []byte
 	IV  []byte
 }
 
+// NewCrypto creates a Crypto instance with key and iv.
 func NewCrypto(key []byte, iv []byte) *Crypto {
 	c := &Crypto{
 		Key: key,

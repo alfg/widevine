@@ -8,9 +8,10 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+// Widevine Cloud URLs.
 const (
-	getLicenseURL    = "https://license.uat.widevine.com/cenc/getlicense"
-	getContentKeyURL = "http://license.uat.widevine.com/cenc/getcontentkey/widevine_test"
+	widevineCloudURL     = "https://license.widevine.com"
+	widevineCloudURLTest = "https://license.uat.widevine.com"
 )
 
 // Widevine structure.
@@ -21,7 +22,7 @@ type Widevine struct {
 	URL      string
 }
 
-// Options structure.
+// Options provided to Widevine{} instance.
 type Options struct {
 	Key      []byte
 	IV       []byte
@@ -29,7 +30,7 @@ type Options struct {
 	URL      string
 }
 
-// GetContentKeyResponse JSON response from Widevine.
+// GetContentKeyResponse JSON response from Widevine Cloud /cenc/getcontentkey/<provider>.
 type GetContentKeyResponse struct {
 	Status string `json:"status"`
 	DRM    []struct {
@@ -47,6 +48,7 @@ type GetContentKeyResponse struct {
 	AlreadyUsed bool `json:"already_used"`
 }
 
+// LicenseResponse decoded JSON response from Widevine Cloud /cenc/getlicense.
 type LicenseResponse struct {
 	Status          string `json:"status"`
 	License         string `json:"license"`
@@ -94,7 +96,7 @@ type LicenseResponse struct {
 	ContentPRovider            string `json:"content_provider"`
 }
 
-// New returns a Widevine instance.
+// New returns a Widevine instance with options.
 func New(opts Options) *Widevine {
 
 	wv := &Widevine{
@@ -108,8 +110,10 @@ func New(opts Options) *Widevine {
 // GetContentKey creates a content key giving a contentID.
 func (wp *Widevine) GetContentKey(contentID string) GetContentKeyResponse {
 	msg := wp.buildMessage(contentID)
-	resp := wp.sendRequest(msg)
+	resp := wp.getContentKeyRequest(msg)
 
+	// TODO
+	// Build custom PSSH from protobuf.
 	// enc := wp.buildPSSH(contentID)
 	// fmt.Println("pssh  build:", enc)
 	return resp
@@ -118,7 +122,7 @@ func (wp *Widevine) GetContentKey(contentID string) GetContentKeyResponse {
 // LicenseRequest creates a license request used with a proxy server.
 func (wp *Widevine) LicenseRequest(contentID string, body string) LicenseResponse {
 	msg := wp.buildLicenseMessage(contentID, body)
-	resp := wp.sendLicenseRequest(msg)
+	resp := wp.getLicenseRequest(msg)
 	return resp
 }
 
@@ -128,7 +132,6 @@ func (wp *Widevine) buildPSSH(contentID string) string {
 		ContentId: []byte(contentID),
 	}
 	p, _ := proto.Marshal(wvpssh)
-
 	return base64.StdEncoding.EncodeToString(p)
 }
 
@@ -181,11 +184,19 @@ func (wp *Widevine) buildLicenseMessage(contentID string, body string) map[strin
 	return postBody
 }
 
-func (wp *Widevine) sendRequest(body map[string]interface{}) GetContentKeyResponse {
+func (wp *Widevine) getContentKeyRequest(body map[string]interface{}) GetContentKeyResponse {
+	// Set production or test portal.
+	var url string
+	if wp.Provider == "widevine_test" {
+		url = widevineCloudURLTest + "/cenc/getcontentkey/widevine_test"
+	} else {
+		url = widevineCloudURL + "/cenc/getcontentkey/" + wp.Provider
+	}
+
 	// Make client call.
 	resp := make(map[string]string)
 	client, _ := NewClient()
-	client.post(getContentKeyURL, &resp, body)
+	client.post(url, &resp, body)
 
 	// Decode and unmarshal the response.
 	dec, _ := base64.StdEncoding.DecodeString(resp["response"])
@@ -194,10 +205,17 @@ func (wp *Widevine) sendRequest(body map[string]interface{}) GetContentKeyRespon
 	return output
 }
 
-func (wp *Widevine) sendLicenseRequest(body map[string]interface{}) LicenseResponse {
+func (wp *Widevine) getLicenseRequest(body map[string]interface{}) LicenseResponse {
+	// Set production or test portal.
+	var url string
+	if wp.Provider == "widevine_test" {
+		url = widevineCloudURLTest + "/cenc/getlicense"
+	} else {
+		url = widevineCloudURL + "/cenc/getlicense"
+	}
 	// Make client call.
 	resp := LicenseResponse{}
 	client, _ := NewClient()
-	client.post(getLicenseURL, &resp, body)
+	client.post(url, &resp, body)
 	return resp
 }
