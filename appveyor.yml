@@ -6,6 +6,8 @@ branches:
   only:
     - master
 
+clone_folder: c:\gopath\src\github.com\alfg\widevine
+
 environment:
   GOPATH: c:\gopath
 
