@@ -4,8 +4,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 
-	"github.com/alfg/widevine/pssh"
-	"github.com/golang/protobuf/proto"
+	"github.com/alfg/widevine/proto"
+	protobuf "github.com/golang/protobuf/proto"
 )
 
 // Widevine Cloud URLs.
@@ -32,68 +32,82 @@ type Options struct {
 
 // GetContentKeyResponse JSON response from Widevine Cloud /cenc/getcontentkey/<provider>.
 type GetContentKeyResponse struct {
-	Status string `json:"status"`
-	DRM    []struct {
-		Type     string `json:"type"`
-		SystemID string `json:"system_id"`
-	}
-	Tracks []struct {
-		Type  string `json:"type"`
-		KeyID string `json:"key_id"`
-		PSSH  []struct {
-			DRMType string `json:"drm_type"`
-			Data    string `json:"data"`
-		}
-	}
-	AlreadyUsed bool `json:"already_used"`
+	Status      string   `json:"status"`
+	DRM         []drm    `json:"drm"`
+	Tracks      []tracks `json:"tracks"`
+	AlreadyUsed bool     `json:"already_used"`
 }
 
-// LicenseResponse decoded JSON response from Widevine Cloud /cenc/getlicense.
-type LicenseResponse struct {
-	Status          string `json:"status"`
-	License         string `json:"license"`
-	LicenseMetadata []struct {
-		ContentID   string `json:"content_id"`
-		LicenseType string `json:"license_type"`
-		RequestType string `json:"request_type"`
-	}
-	SupportedTracks []struct {
-		Type  string `json:"type"`
-		KeyID string `json:"key_id"`
-	}
-	Make           string `json:"make"`
-	Model          string `json:"model"`
-	SecurityLevel  int    `json:"security_level"`
-	InternalStatus int    `json:"internal_status"`
-	SessionState   struct {
-		LicenseID struct {
-			RequestID  string `json:"request_id"`
-			SessionID  string `json:"session_id"`
-			PurchaseID string `json:"purchase_id"`
-			Type       string `json:"type"`
-			Version    int    `json:"version"`
-		}
-		SigningKey     string `json:"signing_key"`
-		KeyboxSystemID int    `json:"keybox_system_id"`
-		LicenseCounter int    `json:"license_counter"`
-	}
-	DRMCertSerialNumber  string `json:"drm_cert_serial_number"`
-	DeviceWhitelistState string `json:"device_whitelist_state"`
-	MessageType          string `json:"message_type"`
-	Platform             string `json:"platform"`
-	DeviceState          string `json:"device_state"`
-	PSSHData             struct {
-		KeyID     string `json:"key_id"`
-		ContentID string `json:"content_id"`
-	}
-	ClientMaxHDCPVersion string `json:"client_max_hdcp_version"`
-	ClientInfo           []struct {
-		Name  string `json:"name"`
-		Value string `json:"value"`
-	}
-	PlatformVerificationStatus string `json:"platform_verification_status"`
-	ContentOwner               string `json:"content_owner"`
-	ContentPRovider            string `json:"content_provider"`
+type drm struct {
+	Type     string `json:"type"`
+	SystemID string `json:"system_id"`
+}
+
+type tracks struct {
+	Type  string `json:"type"`
+	KeyID string `json:"key_id"`
+	PSSH  []pssh `json:"pssh"`
+}
+
+type pssh struct {
+	DRMType string `json:"drm_type"`
+	Data    string `json:"data"`
+}
+
+// GetLicenseResponse decoded JSON response from Widevine Cloud /cenc/getlicense.
+type GetLicenseResponse struct {
+	Status                     string            `json:"status"`
+	License                    string            `json:"license"`
+	Make                       string            `json:"make"`
+	Model                      string            `json:"model"`
+	SecurityLevel              int               `json:"security_level"`
+	InternalStatus             int               `json:"internal_status"`
+	DRMCertSerialNumber        string            `json:"drm_cert_serial_number"`
+	DeviceWhitelistState       string            `json:"device_whitelist_state"`
+	MessageType                string            `json:"message_type"`
+	Platform                   string            `json:"platform"`
+	DeviceState                string            `json:"device_state"`
+	ClientMaxHDCPVersion       string            `json:"client_max_hdcp_version"`
+	PlatformVerificationStatus string            `json:"platform_verification_status"`
+	ContentOwner               string            `json:"content_owner"`
+	ContentPRovider            string            `json:"content_provider"`
+	SessionState               sessionState      `json:"session_state"`
+	LicenseMetadata            licenseMetadata   `json:"license_metadata"`
+	SupportedTracks            []supportedTracks `json:"supported_tracks"`
+	PSSHData                   psshData          `json:"pssh_data"`
+	ClientInfo                 []clientInfo      `json:"client_info"`
+}
+type licenseMetadata struct {
+	ContentID   string `json:"content_id"`
+	LicenseType string `json:"license_type"`
+	RequestType string `json:"request_type"`
+}
+
+type supportedTracks struct {
+	Type  string `json:"type"`
+	KeyID string `json:"key_id"`
+}
+type sessionState struct {
+	LicenseID      licenseID `json:"license_id"`
+	SigningKey     string    `json:"signing_key"`
+	KeyboxSystemID int       `json:"keybox_system_id"`
+	LicenseCounter int       `json:"license_counter"`
+}
+type licenseID struct {
+	RequestID  string `json:"request_id"`
+	SessionID  string `json:"session_id"`
+	PurchaseID string `json:"purchase_id"`
+	Type       string `json:"type"`
+	Version    int    `json:"version"`
+}
+
+type psshData struct {
+	KeyID     string `json:"key_id"`
+	ContentID string `json:"content_id"`
+}
+type clientInfo struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 // New returns a Widevine instance with options.
@@ -119,19 +133,19 @@ func (wp *Widevine) GetContentKey(contentID string) GetContentKeyResponse {
 	return resp
 }
 
-// LicenseRequest creates a license request used with a proxy server.
-func (wp *Widevine) LicenseRequest(contentID string, body string) LicenseResponse {
+// GetLicense creates a license request used with a proxy server.
+func (wp *Widevine) GetLicense(contentID string, body string) GetLicenseResponse {
 	msg := wp.buildLicenseMessage(contentID, body)
 	resp := wp.getLicenseRequest(msg)
 	return resp
 }
 
 func (wp *Widevine) buildPSSH(contentID string) string {
-	wvpssh := &pssh.WidevineCencHeader{
-		Provider:  proto.String(wp.Provider),
+	wvpssh := &proto.WidevineCencHeader{
+		Provider:  protobuf.String(wp.Provider),
 		ContentId: []byte(contentID),
 	}
-	p, _ := proto.Marshal(wvpssh)
+	p, _ := protobuf.Marshal(wvpssh)
 	return base64.StdEncoding.EncodeToString(p)
 }
 
@@ -205,7 +219,7 @@ func (wp *Widevine) getContentKeyRequest(body map[string]interface{}) GetContent
 	return output
 }
 
-func (wp *Widevine) getLicenseRequest(body map[string]interface{}) LicenseResponse {
+func (wp *Widevine) getLicenseRequest(body map[string]interface{}) GetLicenseResponse {
 	// Set production or test portal.
 	var url string
 	if wp.Provider == "widevine_test" {
@@ -214,7 +228,7 @@ func (wp *Widevine) getLicenseRequest(body map[string]interface{}) LicenseRespon
 		url = widevineCloudURL + "/cenc/getlicense"
 	}
 	// Make client call.
-	resp := LicenseResponse{}
+	resp := GetLicenseResponse{}
 	client, _ := NewClient()
 	client.post(url, &resp, body)
 	return resp

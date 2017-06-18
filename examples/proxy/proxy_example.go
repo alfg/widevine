@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -47,8 +48,13 @@ func proxy(w http.ResponseWriter, r *http.Request) {
 	wv := widevine.New(options)
 
 	// Create license request.
-	data := wv.LicenseRequest(contentID, body)
+	data := wv.GetLicense(contentID, body)
 	b, _ := base64.StdEncoding.DecodeString(data.License)
+
+	// Log any additional details from response.
+	fmt.Println(data.LicenseMetadata)
+	fmt.Println(data.SupportedTracks)
+	fmt.Println(data)
 
 	// CORS required for Javascript players.
 	w.Header().Set("Access-Control-Allow-Origin", "*")
