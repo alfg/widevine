@@ -1,0 +1,11 @@
+{
+	"ImportPath": "github.com/alfg/widevine",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
+	"Deps": [
+		{
+			"ImportPath": "github.com/golang/protobuf/proto",
+			"Rev": "5a0f697c9ed9d68fef0116532c6e05cfeae00e55"
+		}
+	]
+}
