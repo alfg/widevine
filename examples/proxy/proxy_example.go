@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/alfg/widevine"
 )
@@ -29,9 +30,14 @@ const contentID = "fkj3ljaSdfalkr3j"
 
 func main() {
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8000"
+	}
+
 	// Create handler and http server.
 	http.HandleFunc("/proxy", proxy)
-	http.ListenAndServe(":8000", nil)
+	http.ListenAndServe(":"+port, nil)
 }
 
 func proxy(w http.ResponseWriter, r *http.Request) {
