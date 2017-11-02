@@ -1,1 +1,1 @@
-web: proxy_example
+web: proxy 
