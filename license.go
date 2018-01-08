@@ -55,6 +55,7 @@ type drm struct {
 type tracks struct {
 	Type  string `json:"type"`
 	KeyID string `json:"key_id"`
+	Key   string `json:"key"`
 	PSSH  []pssh `json:"pssh"`
 }
 
@@ -202,7 +203,7 @@ func (wp *Widevine) buildLicenseMessage(contentID string, body string) map[strin
 		"payload":             body,
 		"content_id":          enc,
 		"provider":            wp.Provider,
-		"allowed_track_types": "SD_HD",
+		"allowed_track_types": "SD_UHD1",
 	}
 	jsonMessage, _ := json.Marshal(message)
 	b64message := base64.StdEncoding.EncodeToString(jsonMessage)
