@@ -3,10 +3,6 @@ package main
 import (
 	"fmt"
 
-	"encoding/base64"
-
-	"encoding/hex"
-
 	"github.com/alfg/widevine"
 )
 
@@ -35,7 +31,7 @@ func main() {
 	wv := widevine.New(options)
 
 	// Your video content ID, usually a GUID.
-	contentID := "fkj3ljaSdfalkr3j"
+	contentID := "testingblahblah"
 
 	// Set policy options.
 	policy := widevine.Policy{
@@ -53,22 +49,9 @@ func main() {
 	fmt.Println("drm: ", resp.DRM)
 	for _, v := range resp.Tracks {
 		fmt.Println("key_id: ", v.KeyID)
-		fmt.Println("key: ", v.Key)
 		fmt.Println("type: ", v.Type)
 		fmt.Println("drm_type: ", v.PSSH[0].DRMType)
 		fmt.Println("data: ", v.PSSH[0].Data)
-
-		keyID, _ := base64.StdEncoding.DecodeString(v.KeyID)
-		keyIDhex := hex.EncodeToString(keyID)
-		fmt.Println("keyid: ", keyIDhex)
-
-		key, _ := base64.StdEncoding.DecodeString(v.Key)
-		keyhex := hex.EncodeToString(key)
-		fmt.Println("key: ", keyhex)
-
-		pssh, _ := base64.StdEncoding.DecodeString(v.PSSH[0].Data)
-		psshhex := hex.EncodeToString(pssh)
-		fmt.Println("pssh: ", psshhex)
 	}
 	fmt.Println("already_used: ", resp.AlreadyUsed)
 }

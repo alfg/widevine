@@ -28,6 +28,12 @@ var (
 // Test MPD: https://demo.unified-streaming.com/video/tears-of-steel/tears-of-steel-dash-widevine.ism/.mpd
 const contentID = "fkj3ljaSdfalkr3j"
 
+// const contentID = "MjAxNV90ZWFycw=="
+// const contentID = "c2hha2FfY2VjNWJmZjVkYzQwZGRjOQ=="
+
+// https://storage.googleapis.com/shaka-demo-assets/sintel-widevine/dash.mpd
+// const contentID = "shaka_cec5bff5dc40ddc9"
+
 func main() {
 
 	port := os.Getenv("PORT")

@@ -55,6 +55,7 @@ type drm struct {
 type tracks struct {
 	Type  string `json:"type"`
 	KeyID string `json:"key_id"`
+	Key   string `json:"key"`
 	PSSH  []pssh `json:"pssh"`
 }
 
@@ -144,6 +145,19 @@ func (wp *Widevine) GetContentKey(contentID string, policy Policy) GetContentKey
 	return resp
 }
 
+// GetExternalContentKey creates a content key giving a contentID.
+func (wp *Widevine) GetExternalContentKey(contentID string, policy Policy) GetContentKeyResponse {
+	p := wp.setPolicy(contentID, policy)
+	msg := wp.buildCKMessage(p)
+	resp := wp.getContentKeyRequest(msg)
+
+	// TODO
+	// Build custom PSSH from protobuf.
+	// enc := wp.buildPSSH(contentID)
+	// fmt.Println("pssh  build:", enc)
+	return resp
+}
+
 // GetLicense creates a license request used with a proxy server.
 func (wp *Widevine) GetLicense(contentID string, body string) GetLicenseResponse {
 	msg := wp.buildLicenseMessage(contentID, body)
@@ -202,7 +216,7 @@ func (wp *Widevine) buildLicenseMessage(contentID string, body string) map[strin
 		"payload":             body,
 		"content_id":          enc,
 		"provider":            wp.Provider,
-		"allowed_track_types": "SD_HD",
+		"allowed_track_types": "SD_UHD1",
 	}
 	jsonMessage, _ := json.Marshal(message)
 	b64message := base64.StdEncoding.EncodeToString(jsonMessage)
@@ -233,6 +247,7 @@ func (wp *Widevine) getContentKeyRequest(body map[string]interface{}) GetContent
 
 	// Decode and unmarshal the response.
 	dec, _ := base64.StdEncoding.DecodeString(resp["response"])
+	// fmt.Println(string(dec))
 	output := GetContentKeyResponse{}
 	json.Unmarshal(dec, &output)
 	return output
@@ -250,5 +265,6 @@ func (wp *Widevine) getLicenseRequest(body map[string]interface{}) GetLicenseRes
 	resp := GetLicenseResponse{}
 	client, _ := NewClient()
 	client.post(url, &resp, body)
+	// fmt.Println(body)
 	return resp
 }
