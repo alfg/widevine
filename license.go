@@ -38,6 +38,12 @@ type Policy struct {
 	Policy    string
 }
 
+// LicenseOptions struct to set license options for GetLicense.
+type LicenseOptions struct {
+	ContentID string
+	Body      string
+}
+
 // GetContentKeyResponse JSON response from Widevine Cloud.
 // /cenc/getcontentkey/<provider>
 type GetContentKeyResponse struct {
@@ -159,8 +165,8 @@ func (wp *Widevine) GetExternalContentKey(contentID string, policy Policy) GetCo
 }
 
 // GetLicense creates a license request used with a proxy server.
-func (wp *Widevine) GetLicense(contentID string, body string) GetLicenseResponse {
-	msg := wp.buildLicenseMessage(contentID, body)
+func (wp *Widevine) GetLicense(options LicenseOptions) GetLicenseResponse {
+	msg := wp.buildLicenseMessage(options)
 	resp := wp.getLicenseRequest(msg)
 	return resp
 }
@@ -209,14 +215,18 @@ func (wp *Widevine) setPolicy(contentID string, policy Policy) map[string]interf
 	return p
 }
 
-func (wp *Widevine) buildLicenseMessage(contentID string, body string) map[string]interface{} {
-	enc := base64.StdEncoding.EncodeToString([]byte(contentID))
+func (wp *Widevine) buildLicenseMessage(options LicenseOptions) map[string]interface{} {
 
 	message := map[string]interface{}{
-		"payload":             body,
-		"content_id":          enc,
+		"payload":             options.Body,
 		"provider":            wp.Provider,
 		"allowed_track_types": "SD_UHD1",
+	}
+
+	// Add the content ID to message if provided.
+	if options.ContentID != "" {
+		enc := base64.StdEncoding.EncodeToString([]byte(options.ContentID))
+		message["content_id"] = enc
 	}
 	jsonMessage, _ := json.Marshal(message)
 	b64message := base64.StdEncoding.EncodeToString(jsonMessage)
