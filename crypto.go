@@ -26,7 +26,7 @@ func NewCrypto(key []byte, iv []byte) *Crypto {
 	return c
 }
 
-func (c *Crypto) generateSignature(payload []byte) string {
+func (c *Crypto) GenerateSignature(payload []byte) string {
 	h := sha1.New()
 	h.Write([]byte(payload))
 
