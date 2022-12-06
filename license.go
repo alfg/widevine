@@ -62,6 +62,7 @@ type tracks struct {
 type pssh struct {
 	DRMType string `json:"drm_type"`
 	Data    string `json:"data"`
+	Boxes   string `json:"boxes, omitempty"`
 }
 
 // GetLicenseResponse decoded JSON response from Widevine Cloud.
@@ -123,7 +124,6 @@ type clientInfo struct {
 
 // New returns a Widevine instance with options.
 func New(opts Options) *Widevine {
-
 	wv := &Widevine{
 		Key:      opts.Key,
 		IV:       opts.IV,
@@ -170,7 +170,7 @@ func (wp *Widevine) buildCKMessage(policy map[string]interface{}) map[string]int
 	crypto := NewCrypto(wp.Key, wp.IV)
 	postBody := map[string]interface{}{
 		"request":   b64payload,
-		"signature": crypto.generateSignature(jsonPayload),
+		"signature": crypto.GenerateSignature(jsonPayload),
 		"signer":    wp.Provider,
 	}
 	return postBody
@@ -212,7 +212,7 @@ func (wp *Widevine) buildLicenseMessage(contentID string, body string) map[strin
 	crypto := NewCrypto(wp.Key, wp.IV)
 	postBody := map[string]interface{}{
 		"request":   b64message,
-		"signature": crypto.generateSignature(jsonMessage),
+		"signature": crypto.GenerateSignature(jsonMessage),
 		"signer":    wp.Provider,
 	}
 	return postBody
