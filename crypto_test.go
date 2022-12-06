@@ -62,7 +62,7 @@ func TestGenerateSignature(t *testing.T) {
 		"isTest": true,
 	}
 	jsonPayload, _ := json.Marshal(payload)
-	sig := c.generateSignature(jsonPayload)
+	sig := c.GenerateSignature(jsonPayload)
 
 	if sig != "ga80QzRuUM+jnPcoR6UWs5TXrTQ2VgeYiu0FoqCNRH4=" {
 		t.Error()
